@@ -26,14 +26,15 @@ func _input(event):
 		if last_quadratic:
 			control_points.append(drag_points[drag_points.size()-1])
 			quadratic.append(false)
-		control_points.append(drag_point-(mouse_pos-drag_point))
-		quadratic.append(last_quadratic)
+		if not (control_points.size() == 0 and first_drag):
+			control_points.append(drag_point-(mouse_pos-drag_point))
+			quadratic.append(last_quadratic)
 		if is_dragging:
-			quadratic.append(false)
 			last_quadratic = true
-			control_points.append(drag_point)
 			drag_points.append(drag_point-(mouse_pos-drag_point))
 			drag_points.append(mouse_pos)
+			control_points.append(drag_point)
+			quadratic.append(false)
 		else:
 			last_quadratic = false
 		is_dragging = false
@@ -45,21 +46,18 @@ func _draw():
 	var mouse_pos = get_viewport().get_mouse_position()
 	if control_points.size() > 0:
 		var control_size = control_points.size()
-		var init_drag = 1
+		draw_circle(control_points[0], 3, BLACK)
 		for i in range(1, control_size):
-			draw_circle(control_points[i], 3, BLACK)
-			if not quadratic[i] and not (i == 1 and first_drag):
+			if not quadratic[i] and not control_points[i-1] in drag_points:
 				draw_bezier(control_points[i-1], control_points[i], quadratic(control_points[i], i))
-		if first_drag:
-			draw_circle(drag_points[1], 3, BLACK)
-			draw_line(control_points[1], drag_points[1], BLACK)
-			init_drag = 3
-		else:
-			draw_circle(control_points[0], 3, BLACK)
-		for i in range(init_drag, drag_size, 2):
-			draw_circle(drag_points[i-1], 3, BLACK)
-			draw_circle(drag_points[i], 3, BLACK)
-			draw_line(drag_points[i-1], drag_points[i], BLACK)
+		if drag_size > 1 and not is_dragging:
+			if not (first_drag and drag_size == 2):
+				draw_circle(drag_points[drag_size-2], 3, BLACK)
+				draw_circle(drag_points[drag_size-1], 3, BLACK)
+				draw_line(drag_points[drag_size-2], drag_points[drag_size-1], BLACK)
+			else:
+				draw_circle(drag_points[1], 3, BLACK)
+				draw_line(control_points[0], drag_points[1], BLACK)
 		if is_dragging:
 			draw_circle(mouse_pos, 3, BLACK)
 			draw_circle(drag_point-(mouse_pos-drag_point), 3, BLACK)
