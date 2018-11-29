@@ -11,6 +11,7 @@ var is_dragging = false
 var drag_point = null
 var last_quadratic = false
 var quadratic = []
+var first_drag = false
 
 func _input(event):
 	if event.is_action_pressed('ui_cancel'):
@@ -40,16 +41,22 @@ func _input(event):
 	update()
 
 func _draw():
+	var drag_size = drag_points.size()
+	var mouse_pos = get_viewport().get_mouse_position()
 	if control_points.size() > 0:
-		var mouse_pos = get_viewport().get_mouse_position()
 		var control_size = control_points.size()
-		var drag_size = drag_points.size()
-		draw_circle(control_points[0], 3, BLACK)
+		var init_drag = 1
 		for i in range(1, control_size):
 			draw_circle(control_points[i], 3, BLACK)
-			if not quadratic[i]:
+			if not quadratic[i] and not (i == 1 and first_drag):
 				draw_bezier(control_points[i-1], control_points[i], quadratic(control_points[i], i))
-		for i in range(1, drag_size, 2):
+		if first_drag:
+			draw_circle(drag_points[1], 3, BLACK)
+			draw_line(control_points[1], drag_points[1], BLACK)
+			init_drag = 3
+		else:
+			draw_circle(control_points[0], 3, BLACK)
+		for i in range(init_drag, drag_size, 2):
 			draw_circle(drag_points[i-1], 3, BLACK)
 			draw_circle(drag_points[i], 3, BLACK)
 			draw_line(drag_points[i-1], drag_points[i], BLACK)
@@ -59,11 +66,14 @@ func _draw():
 			draw_bezier(control_points[control_size-1], drag_point-(mouse_pos-drag_point), drag_point)
 			draw_line(drag_point-(mouse_pos-drag_point), mouse_pos, BLACK)
 		else:
-			draw_circle(control_points[control_size-1], 3, BLACK)
 			if last_quadratic:
 				draw_bezier(control_points[control_size-1], drag_points[drag_size-1], mouse_pos)
 			else:
 				draw_line(control_points[control_size-1], mouse_pos, BLACK)
+	elif is_dragging:
+		draw_circle(drag_point, 3, BLACK)
+		draw_line(drag_point, mouse_pos, BLACK)
+		first_drag = true
 
 func quadratic(p, i):
 	if i < control_points.size()-1 and drag_points.has(p):
